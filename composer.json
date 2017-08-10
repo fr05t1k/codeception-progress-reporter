@@ -1,0 +1,14 @@
+{
+    "name": "codeception/codeception-progress-reporter",
+    "version": "0.0.1",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Codeception\\ProgressReporter\\": "src/",
+            "Codeception\\ProgressReporter\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "codeception/codeception": "^2.3"
+    }
+}

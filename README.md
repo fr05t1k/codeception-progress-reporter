@@ -1,1 +1,1 @@
-# codeception-progress-reporter
+# Codeception Progress Reporter

@@ -1,0 +1,4 @@
+vendor/
+tests/unit/Stub
+tests/_output/*
+maketests.sh
