@@ -9,7 +9,7 @@ php:
 install:
   - travis_retry composer self-update
   - travis_retry composer --version
-  - travis_retry composer install --prefer-dist --no-interaction
+  - travis_retry composer update --prefer-dist --no-interaction
 
 script:
   - php vendor/bin/codecept run
