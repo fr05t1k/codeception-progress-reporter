@@ -33,7 +33,7 @@ class Status
      *
      * @return int
      */
-    public function getFails(): int
+    public function getFails()
     {
         return $this->fails;
     }
@@ -43,7 +43,7 @@ class Status
      *
      * @return int
      */
-    public function getSuccess(): int
+    public function getSuccess()
     {
         return $this->success;
     }
@@ -53,7 +53,7 @@ class Status
      *
      * @return int
      */
-    public function getErrors(): int
+    public function getErrors()
     {
         return $this->errors;
     }
