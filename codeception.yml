@@ -6,7 +6,3 @@ paths:
     support: tests/_support
     envs: tests/_envs
 actor_suffix: Tester
-extensions:
-    enabled:
-        - Codeception\Extension\RunFailed
-        - Codeception\ProgressReporter\ProgressReporter
