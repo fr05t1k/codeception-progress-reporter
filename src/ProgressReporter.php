@@ -15,29 +15,44 @@ use Symfony\Component\Console\Helper\ProgressBar;
  */
 class ProgressReporter extends Extension
 {
-    // we are listening for events
     /**
+     * We are listening for events
+     *
      * @var array
      */
     public static $events = [
         Events::SUITE_BEFORE => 'beforeSuite',
         Events::TEST_BEFORE => 'beforeTest',
         Events::TEST_AFTER => 'afterTest',
-        Events::TEST_FAIL_PRINT => 'printFailed'
+        Events::TEST_FAIL_PRINT => 'printFailed',
+        Events::TEST_SUCCESS => 'success',
+        Events::TEST_ERROR => 'error',
+        Events::TEST_FAIL => 'fail',
     ];
 
     /**
+     * Standard reporter for printing fails
+     *
      * @var Console
      */
     public $standardReporter;
 
     /**
+     * Progress bar
+     *
      * @var ProgressBar
      */
     protected $progress;
 
     /**
+     * Status (counter)
      *
+     * @var Status
+     */
+    protected $status;
+
+    /**
+     * Setup
      */
     public function _initialize()
     {
@@ -46,11 +61,16 @@ class ProgressReporter extends Extension
         $this->standardReporter = new Console($this->options);
         ProgressBar::setFormatDefinition(
             'custom',
-            "%message%\n<info>[%bar%]</info>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%"
+            "Current test: <options=bold>%file%</>\n".
+            "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
+            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%"
         );
+        $this->status = new Status();
     }
 
     /**
+     * Setup progress bar
+     *
      * @param SuiteEvent $event
      */
     public function beforeSuite(SuiteEvent $event)
@@ -59,12 +79,12 @@ class ProgressReporter extends Extension
         $this->progress = new ProgressBar($this->output, $count);
         $this->progress->setFormat('custom');
         $this->progress->setBarWidth($count);
-        $this->progress->setRedrawFrequency(5);
+        $this->progress->setRedrawFrequency($count / 100);
         $this->progress->start();
     }
 
     /**
-     *
+     * After test
      */
     public function afterTest()
     {
@@ -72,18 +92,51 @@ class ProgressReporter extends Extension
     }
 
     /**
+     * Before test
      *
      * @param TestEvent $event
      */
     public function beforeTest(TestEvent $event)
     {
         $message = $event->getTest()->getMetadata()->getFilename();
-        $this->progress->setMessage($message);
+        $this->progress->setMessage($message, 'file');
+        $this->progress->setMessage($this->status->getSuccess(), 'success');
+        $this->progress->setMessage($this->status->getFails(), 'fails');
+        $this->progress->setMessage($this->status->getErrors(), 'errors');
     }
 
 
+    /**
+     * Print failed tests
+     *
+     * @param FailEvent $event
+     */
     public function printFailed(FailEvent $event)
     {
         $this->standardReporter->printFail($event);
+    }
+
+    /**
+     * Success event
+     */
+    public function success()
+    {
+        $this->status->incSuccess();
+    }
+
+    /**
+     * Error event
+     */
+    public function error()
+    {
+        $this->status->incErrors();
+    }
+
+    /**
+     * Fail event
+     */
+    public function fail()
+    {
+        $this->status->incFails();
     }
 }
