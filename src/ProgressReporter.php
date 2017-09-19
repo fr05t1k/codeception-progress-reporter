@@ -99,7 +99,7 @@ class ProgressReporter extends Extension
     public function beforeTest(TestEvent $event)
     {
         $message = $event->getTest()->getMetadata()->getFilename();
-        $this->progress->setMessage($message, 'file');
+        $this->progress->setMessage(pathinfo($message, PATHINFO_FILENAME), 'file');
         $this->progress->setMessage($this->status->getSuccess(), 'success');
         $this->progress->setMessage($this->status->getFails(), 'fails');
         $this->progress->setMessage($this->status->getErrors(), 'errors');
