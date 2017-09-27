@@ -1,0 +1,4 @@
+actor: ApiTester
+modules:
+    enabled:
+        - \Codeception\ProgressReporter\Tests\Helper\Api
