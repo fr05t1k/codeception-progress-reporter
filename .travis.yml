@@ -12,5 +12,5 @@ install:
   - travis_retry composer update --prefer-dist --no-interaction
 
 script:
-  - ./maketests.sh
+  - sh ./maketests.sh
   - php vendor/bin/codecept run
