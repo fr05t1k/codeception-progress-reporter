@@ -1,4 +1,5 @@
 vendor/
 tests/unit/Stub
+tests/api/Stub
 tests/_output/*
 maketests.sh

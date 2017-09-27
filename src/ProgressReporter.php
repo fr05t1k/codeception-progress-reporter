@@ -22,6 +22,7 @@ class ProgressReporter extends Extension
      */
     public static $events = [
         Events::SUITE_BEFORE => 'beforeSuite',
+        Events::SUITE_AFTER => 'afterSuite',
         Events::TEST_BEFORE => 'beforeTest',
         Events::TEST_AFTER => 'afterTest',
         Events::TEST_FAIL_PRINT => 'printFailed',
@@ -63,7 +64,7 @@ class ProgressReporter extends Extension
             'custom',
             "Current test: <options=bold>%file%</>\n".
             "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
-            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%"
+            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n"
         );
         $this->status = new Status();
     }
@@ -75,12 +76,27 @@ class ProgressReporter extends Extension
      */
     public function beforeSuite(SuiteEvent $event)
     {
+        $this->status = new Status();
+
         $count = $event->getSuite()->count(true);
         $this->progress = new ProgressBar($this->output, $count);
         $this->progress->setFormat('custom');
         $this->progress->setBarWidth($count);
         $this->progress->setRedrawFrequency($count / 100);
+
+        $this->progress->setMessage('none', 'file');
+        $this->progress->setMessage($this->status->getSuccess(), 'success');
+        $this->progress->setMessage($this->status->getFails(), 'fails');
+        $this->progress->setMessage($this->status->getErrors(), 'errors');
+
         $this->progress->start();
+    }
+    /**
+     * After suite
+     */
+    public function afterSuite()
+    {
+        $this->progress->display();
     }
 
     /**
@@ -89,6 +105,9 @@ class ProgressReporter extends Extension
     public function afterTest()
     {
         $this->progress->advance();
+        $this->progress->setMessage($this->status->getSuccess(), 'success');
+        $this->progress->setMessage($this->status->getFails(), 'fails');
+        $this->progress->setMessage($this->status->getErrors(), 'errors');
     }
 
     /**
@@ -100,9 +119,6 @@ class ProgressReporter extends Extension
     {
         $message = $event->getTest()->getMetadata()->getFilename();
         $this->progress->setMessage(pathinfo($message, PATHINFO_FILENAME), 'file');
-        $this->progress->setMessage($this->status->getSuccess(), 'success');
-        $this->progress->setMessage($this->status->getFails(), 'fails');
-        $this->progress->setMessage($this->status->getErrors(), 'errors');
     }
 
 
