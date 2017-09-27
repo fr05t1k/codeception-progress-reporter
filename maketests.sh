@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 for i in `seq 1 100`; do
     ./codecept g:test unit Stub/Test$i
