@@ -57,16 +57,29 @@ class ProgressReporter extends Extension
      */
     public function _initialize()
     {
-        $this->options['silent'] = false; // turn on printing for this extension
-        $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
-        $this->standardReporter = new Console($this->options);
-        ProgressBar::setFormatDefinition(
-            'custom',
-            "Current test: <options=bold>%file%</>\n".
-            "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
-            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n"
-        );
-        $this->status = new Status();
+        if($this->options['silent'] == false) 
+        {   
+            // turn on printing for this extension
+            $this->_reconfigure(['settings' => ['silent' => true]]);
+            $this->standardReporter = new Console($this->options);
+            ProgressBar::setFormatDefinition(
+                'custom',
+                "Current test: <options=bold>%file%</>\n".
+                "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
+                "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n"
+            );
+        }
+        else if($this->options['silent'] == true)
+        {
+            // turn off printing for everything else
+            $this->_reconfigure(['settings' => ['silent' => true]]);
+            $this->standardReporter = new Console($this->options);
+            ProgressBar::setFormatDefinition(
+                'custom',""
+            );
+        }
+
+            $this->status = new Status();
     }
 
     /**
