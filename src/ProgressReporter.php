@@ -57,8 +57,7 @@ class ProgressReporter extends Extension
      */
     public function _initialize()
     {
-        if($this->options['silent'] == false) 
-        {   
+        if ($this->options['silent'] == false) {   
             // turn on printing for this extension
             $this->_reconfigure(['settings' => ['silent' => true]]);
             $this->standardReporter = new Console($this->options);
@@ -68,9 +67,7 @@ class ProgressReporter extends Extension
                 "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
                 "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n"
             );
-        }
-        else if($this->options['silent'] == true)
-        {
+        } elseif ($this->options['silent'] == true) {
             // turn off printing for everything else
             $this->_reconfigure(['settings' => ['silent' => true]]);
             $this->standardReporter = new Console($this->options);
@@ -78,8 +75,7 @@ class ProgressReporter extends Extension
                 'custom',""
             );
         }
-
-            $this->status = new Status();
+        $this->status = new Status();
     }
 
     /**
