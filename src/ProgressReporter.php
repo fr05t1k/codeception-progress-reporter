@@ -57,15 +57,16 @@ class ProgressReporter extends Extension
      */
     public function _initialize()
     {
-        $this->options['silent'] = false; // turn on printing for this extension
+        $format = '';
+        if (!$this->options['silent']) {
+            $format = "\nCurrent test: <options=bold>%file%</>\n".
+            "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
+            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
+        }
+
         $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
         $this->standardReporter = new Console($this->options);
-        ProgressBar::setFormatDefinition(
-            'custom',
-            "Current test: <options=bold>%file%</>\n".
-            "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
-            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n"
-        );
+        ProgressBar::setFormatDefinition('custom', $format);
         $this->status = new Status();
     }
 
