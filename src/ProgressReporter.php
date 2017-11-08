@@ -20,16 +20,7 @@ class ProgressReporter extends Extension
      *
      * @var array
      */
-    public static $events = [
-        Events::SUITE_BEFORE => 'beforeSuite',
-        Events::SUITE_AFTER => 'afterSuite',
-        Events::TEST_BEFORE => 'beforeTest',
-        Events::TEST_AFTER => 'afterTest',
-        Events::TEST_FAIL_PRINT => 'printFailed',
-        Events::TEST_SUCCESS => 'success',
-        Events::TEST_ERROR => 'error',
-        Events::TEST_FAIL => 'fail',
-    ];
+    public static $events = [];
 
     /**
      * Standard reporter for printing fails
@@ -59,21 +50,47 @@ class ProgressReporter extends Extension
     {
         if ($this->options['steps'] || $this->options['debug']) {
             // Don't show progress bar when --steps or --debug option is provided
-            self::$events = [];
+            $this->unsubscribeFromEvents();
             return;
         }
 
+        $this->subscribeToEvents();
         $format = '';
         if (!$this->options['silent']) {
-            $format = "\nCurrent test: <options=bold>%file%</>\n".
-            "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
-            "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
+            $format = "\nCurrent test: <options=bold>%file%</>\n" .
+                "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
+                "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
         }
 
         $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
         $this->standardReporter = new Console($this->options);
         ProgressBar::setFormatDefinition('custom', $format);
         $this->status = new Status();
+    }
+
+    /**
+     * Subscribe to all events
+     */
+    private function subscribeToEvents()
+    {
+        self::$events = [
+            Events::SUITE_BEFORE => 'beforeSuite',
+            Events::SUITE_AFTER => 'afterSuite',
+            Events::TEST_BEFORE => 'beforeTest',
+            Events::TEST_AFTER => 'afterTest',
+            Events::TEST_FAIL_PRINT => 'printFailed',
+            Events::TEST_SUCCESS => 'success',
+            Events::TEST_ERROR => 'error',
+            Events::TEST_FAIL => 'fail',
+        ];
+    }
+
+    /**
+     * Unsubscribe from all events
+     */
+    private function unsubscribeFromEvents()
+    {
+        self::$events = [];
     }
 
     /**
@@ -98,6 +115,7 @@ class ProgressReporter extends Extension
 
         $this->progress->start();
     }
+
     /**
      * After suite
      */
