@@ -57,6 +57,12 @@ class ProgressReporter extends Extension
      */
     public function _initialize()
     {
+        if ($this->options['steps'] || $this->options['debug']) {
+            // Don't show progress bar when --steps or --debug option is provided
+            self::$events = [];
+            return;
+        }
+
         $format = '';
         if (!$this->options['silent']) {
             $format = "\nCurrent test: <options=bold>%file%</>\n".
