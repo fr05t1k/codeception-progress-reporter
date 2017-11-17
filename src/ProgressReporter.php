@@ -57,7 +57,8 @@ class ProgressReporter extends Extension
         $this->subscribeToEvents();
         $format = '';
         if (!$this->options['silent']) {
-            $format = "\nCurrent test: <options=bold>%file%</>\n" .
+            $format = "\nCurrent suite: <options=bold>%suite%</>\n" .
+                "Current test: <options=bold>%file%</>\n" .
                 "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
                 "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
         }
@@ -109,6 +110,7 @@ class ProgressReporter extends Extension
         $this->progress->setRedrawFrequency($count / 100);
 
         $this->progress->setMessage('none', 'file');
+        $this->progress->setMessage($event->getSuite()->getBaseName(), 'suite');
         $this->progress->setMessage($this->status->getSuccess(), 'success');
         $this->progress->setMessage($this->status->getFails(), 'fails');
         $this->progress->setMessage($this->status->getErrors(), 'errors');
