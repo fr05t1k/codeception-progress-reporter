@@ -10,6 +10,6 @@
   "require": {
     "php": ">=5.4.0 <8.0",
     "codeception/codeception": "^2.3",
-    "symfony/console": ">=2.7 <4.0"
+    "symfony/console": ">=2.7 <5.0"
   }
 }
