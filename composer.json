@@ -3,9 +3,11 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Codeception\\ProgressReporter\\": "src/",
-      "Codeception\\ProgressReporter\\Tests\\": "tests/"
+      "Codeception\\ProgressReporter\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "Codeception\\ProgressReporter\\Tests\\": "tests/_support"
   },
   "require": {
     "php": ">=5.6.0 <8.0",
