@@ -1,6 +1,23 @@
 {
   "name": "codeception/codeception-progress-reporter",
+  "description": "A Codeception extension that replaces the default test output with a live terminal progress bar showing success/error/fail counts, timing and memory usage.",
+  "type": "library",
   "license": "MIT",
+  "homepage": "https://github.com/fr05t1k/codeception-progress-reporter",
+  "keywords": [
+    "codeception",
+    "extension",
+    "progress",
+    "progress-bar",
+    "reporter",
+    "testing",
+    "cli",
+    "console"
+  ],
+  "support": {
+    "issues": "https://github.com/fr05t1k/codeception-progress-reporter/issues",
+    "source": "https://github.com/fr05t1k/codeception-progress-reporter"
+  },
   "autoload": {
     "psr-4": {
       "Codeception\\ProgressReporter\\": "src/"
