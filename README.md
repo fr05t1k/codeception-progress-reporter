@@ -1,7 +1,7 @@
 # Codeception Progress Reporter
 [![CI](https://github.com/fr05t1k/codeception-progress-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/fr05t1k/codeception-progress-reporter/actions/workflows/ci.yml)
 
-![preview](preview.gif)
+![preview](preview.svg)
 
 ## How to install
 ```bash
