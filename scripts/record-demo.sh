@@ -47,6 +47,8 @@ echo "==> Recording real progress bar to ${OUT}"
 CAST="$(mktemp --suffix=.cast)"
 python3 scripts/capture-cast.py "${CAST}" 100 14 -- \
   php -d register_argc_argv=On -d memory_limit=512M vendor/bin/codecept run unit
+# Drop Codeception's leading banner line so the demo starts at the progress bar.
+python3 scripts/strip-banner.py "${CAST}"
 # termtosvg's recorder is broken on Python 3.14, but its renderer works, so we
 # render the cast captured above into a self-contained animated SVG.
 termtosvg render "${CAST}" "${OUT}" --template window_frame

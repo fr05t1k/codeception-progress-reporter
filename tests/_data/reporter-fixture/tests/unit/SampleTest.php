@@ -22,4 +22,14 @@ final class SampleTest extends Unit
     {
         throw new \RuntimeException('intentional error');
     }
+
+    public function testSkipped(): void
+    {
+        $this->markTestSkipped('intentional skip');
+    }
+
+    public function testIncomplete(): void
+    {
+        $this->markTestIncomplete('intentional incomplete');
+    }
 }
