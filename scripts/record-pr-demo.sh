@@ -85,6 +85,9 @@ echo "==> Recording real progress bar (${COLS}x${ROWS})"
 python3 scripts/capture-cast.py "${CAST}" "${COLS}" "${ROWS}" -- \
   ${PHP} vendor/bin/codecept run unit Stub || true
 
+# Drop Codeception's leading banner line so the demo starts at the progress bar.
+python3 scripts/strip-banner.py "${CAST}"
+
 echo "==> Rendering GIF -> ${OUT}"
 "${AGG}" --theme monokai --font-size 16 --speed 1 "${CAST}" "${OUT}"
 rm -f "${CAST}"

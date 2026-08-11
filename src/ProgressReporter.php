@@ -66,7 +66,7 @@ class ProgressReporter extends Extension
         $okFormat = '';
         $failedFormat = '';
         if (!$this->options['silent']) {
-            $header = "\nCurrent suite: <options=bold>%suite%</>\n" .
+            $header = "Current suite: <options=bold>%suite%</>\n" .
                 "Current test: <options=bold>%file%</>\n" .
                 "<fg=green>Success: %success%</> " .
                 "<fg=cyan>Skipped: %skipped%</> " .
