@@ -66,4 +66,32 @@ final class StatusTest extends Unit
         $this->assertSame(1, $this->status->getErrors());
         $this->assertSame(1, $this->status->getFails());
     }
+
+    public function testIncSkippedAndIncomplete(): void
+    {
+        $this->status->incSkipped();
+        $this->status->incSkipped();
+        $this->status->incIncomplete();
+
+        $this->assertSame(2, $this->status->getSkipped());
+        $this->assertSame(1, $this->status->getIncomplete());
+    }
+
+    public function testHasFailures(): void
+    {
+        $this->assertFalse($this->status->hasFailures());
+
+        $this->status->incSuccess();
+        $this->status->incSkipped();
+        $this->assertFalse($this->status->hasFailures(), 'passing/skipped tests are not failures');
+
+        $this->status->incFails();
+        $this->assertTrue($this->status->hasFailures());
+    }
+
+    public function testHasFailuresOnErrorOnly(): void
+    {
+        $this->status->incErrors();
+        $this->assertTrue($this->status->hasFailures());
+    }
 }

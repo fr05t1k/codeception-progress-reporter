@@ -15,6 +15,10 @@ final class Status
 
     private int $errors = 0;
 
+    private int $skipped = 0;
+
+    private int $incomplete = 0;
+
     public function getFails(): int
     {
         return $this->fails;
@@ -30,6 +34,16 @@ final class Status
         return $this->errors;
     }
 
+    public function getSkipped(): int
+    {
+        return $this->skipped;
+    }
+
+    public function getIncomplete(): int
+    {
+        return $this->incomplete;
+    }
+
     public function incSuccess(): void
     {
         $this->success++;
@@ -43,5 +57,23 @@ final class Status
     public function incFails(): void
     {
         $this->fails++;
+    }
+
+    public function incSkipped(): void
+    {
+        $this->skipped++;
+    }
+
+    public function incIncomplete(): void
+    {
+        $this->incomplete++;
+    }
+
+    /**
+     * Whether any test has errored or failed so far.
+     */
+    public function hasFailures(): bool
+    {
+        return $this->fails > 0 || $this->errors > 0;
     }
 }

@@ -11,9 +11,11 @@ use Codeception\Events;
 use Codeception\Extension;
 use Codeception\Subscriber\Console;
 use Symfony\Component\Console\Helper\ProgressBar;
+use Symfony\Component\Console\Terminal;
 
 use function count;
 use function max;
+use function min;
 use function pathinfo;
 
 use const PATHINFO_FILENAME;
@@ -24,6 +26,16 @@ use const PATHINFO_FILENAME;
  */
 class ProgressReporter extends Extension
 {
+    /**
+     * Progress bar format shown while the run is still passing.
+     */
+    private const FORMAT_OK = 'codeception_progress';
+
+    /**
+     * Progress bar format shown once a test has failed or errored (red bar).
+     */
+    private const FORMAT_FAILED = 'codeception_progress_failed';
+
     /**
      * Events this extension subscribes to.
      *
@@ -51,18 +63,27 @@ class ProgressReporter extends Extension
 
         $this->subscribeToEvents();
 
-        $format = '';
+        $okFormat = '';
+        $failedFormat = '';
         if (!$this->options['silent']) {
-            $format = "\nCurrent suite: <options=bold>%suite%</>\n" .
+            $header = "\nCurrent suite: <options=bold>%suite%</>\n" .
                 "Current test: <options=bold>%file%</>\n" .
-                "<fg=green>Success: %success%</> <fg=yellow>Errors: %errors%</> <fg=red>Fails: %fails%</>\n" .
-                "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
+                "<fg=green>Success: %success%</> " .
+                "<fg=cyan>Skipped: %skipped%</> " .
+                "<fg=magenta>Incomplete: %incomplete%</> " .
+                "<fg=yellow>Errors: %errors%</> " .
+                "<fg=red>Fails: %fails%</>\n";
+            $footer = "\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
+
+            $okFormat = $header . "<fg=cyan>[%bar%]</>" . $footer;
+            $failedFormat = $header . "<fg=red>[%bar%]</>" . $footer;
         }
 
         // Turn off default printing for everything else.
         $this->_reconfigure(['settings' => ['silent' => true]]);
         $this->standardReporter = new Console($this->options);
-        ProgressBar::setFormatDefinition('custom', $format);
+        ProgressBar::setFormatDefinition(self::FORMAT_OK, $okFormat);
+        ProgressBar::setFormatDefinition(self::FORMAT_FAILED, $failedFormat);
         $this->status = new Status();
     }
 
@@ -80,6 +101,8 @@ class ProgressReporter extends Extension
             Events::TEST_SUCCESS => 'success',
             Events::TEST_ERROR => 'error',
             Events::TEST_FAIL => 'fail',
+            Events::TEST_SKIPPED => 'skipped',
+            Events::TEST_INCOMPLETE => 'incomplete',
         ];
     }
 
@@ -102,8 +125,8 @@ class ProgressReporter extends Extension
         $count = max(1, count($suite->getTests()));
 
         $this->progress = new ProgressBar($this->output, $count);
-        $this->progress->setFormat('custom');
-        $this->progress->setBarWidth($count);
+        $this->progress->setFormat(self::FORMAT_OK);
+        $this->progress->setBarWidth($this->resolveBarWidth());
         $this->progress->setRedrawFrequency((int) max(1, $count / 100));
 
         $this->progress->setMessage('none', 'file');
@@ -111,6 +134,18 @@ class ProgressReporter extends Extension
         $this->updateCounters();
 
         $this->progress->start();
+    }
+
+    /**
+     * Pick a progress-bar width that fits the terminal instead of scaling with
+     * the number of tests (which overflowed wide on large suites and looked
+     * stubby on small ones).
+     */
+    private function resolveBarWidth(): int
+    {
+        $terminalWidth = (new Terminal())->getWidth();
+
+        return max(10, min(60, $terminalWidth - 15));
     }
 
     /**
@@ -160,11 +195,32 @@ class ProgressReporter extends Extension
     public function error(): void
     {
         $this->status->incErrors();
+        $this->markFailed();
     }
 
     public function fail(): void
     {
         $this->status->incFails();
+        $this->markFailed();
+    }
+
+    public function skipped(): void
+    {
+        $this->status->incSkipped();
+    }
+
+    public function incomplete(): void
+    {
+        $this->status->incIncomplete();
+    }
+
+    /**
+     * Switch the progress bar to its red format the first time a test fails or
+     * errors, giving an at-a-glance signal that the run is no longer green.
+     */
+    private function markFailed(): void
+    {
+        $this->progress?->setFormat(self::FORMAT_FAILED);
     }
 
     /**
@@ -173,7 +229,9 @@ class ProgressReporter extends Extension
     private function updateCounters(): void
     {
         $this->progress?->setMessage((string) $this->status->getSuccess(), 'success');
-        $this->progress?->setMessage((string) $this->status->getFails(), 'fails');
+        $this->progress?->setMessage((string) $this->status->getSkipped(), 'skipped');
+        $this->progress?->setMessage((string) $this->status->getIncomplete(), 'incomplete');
         $this->progress?->setMessage((string) $this->status->getErrors(), 'errors');
+        $this->progress?->setMessage((string) $this->status->getFails(), 'fails');
     }
 }
