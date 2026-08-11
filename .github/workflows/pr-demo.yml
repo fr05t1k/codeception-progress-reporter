@@ -1,0 +1,111 @@
+name: PR demo
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Regenerates the animated progress-bar demo and posts it as a PR comment so the
+# reporter output can be verified visually. Skipped for fork PRs, which only get
+# a read-only token and cannot push the asset or comment.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-demo-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  demo:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          ini-values: register_argc_argv=On, memory_limit=512M
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction
+
+      - name: Install rendering tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-dejavu-core
+          curl -sSL -o /usr/local/bin/agg \
+            https://github.com/asciinema/agg/releases/download/v1.9.0/agg-x86_64-unknown-linux-musl
+          chmod +x /usr/local/bin/agg
+          agg --version
+
+      - name: Record demo GIF
+        env:
+          DEMO_TESTS: '20'
+          DEMO_DELAY: '0.08'
+        run: ./scripts/record-pr-demo.sh demo.gif
+
+      - name: Publish GIF to demo-assets branch
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          file="pr-${PR_NUMBER}.gif"
+          cp demo.gif "/tmp/${file}"
+
+          work="$(mktemp -d)"
+          repo_url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git clone --quiet --branch demo-assets --single-branch "${repo_url}" "${work}" 2>/dev/null; then
+            cd "${work}"
+          else
+            git clone --quiet "${repo_url}" "${work}"
+            cd "${work}"
+            git checkout --orphan demo-assets
+            git rm -rfq . 2>/dev/null || true
+          fi
+
+          cp "/tmp/${file}" "./${file}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${file}"
+          if git diff --cached --quiet; then
+            echo "GIF unchanged; reusing existing asset."
+          else
+            git commit -qm "demo: update ${file} for PR #${PR_NUMBER} [skip ci]"
+            git push -q origin demo-assets
+          fi
+
+          sha="$(git rev-parse HEAD)"
+          echo "url=https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${sha}/${file}" >> "$GITHUB_OUTPUT"
+
+      - name: Find existing demo comment
+        uses: peter-evans/find-comment@v3
+        id: find
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- pr-demo-comment -->'
+
+      - name: Create or update demo comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          body: |
+            <!-- pr-demo-comment -->
+            ### 🎬 Progress reporter demo
+
+            A live recording of the extension running a suite (with one failing and
+            one erroring test) so the output can be verified visually.
+
+            ![progress reporter demo](${{ steps.publish.outputs.url }})
+
+            <sub>Regenerated automatically from ${{ github.event.pull_request.head.sha }}.</sub>
