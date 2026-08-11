@@ -1,5 +1,5 @@
 # Codeception Progress Reporter
-[![Build Status](https://travis-ci.org/fr05t1k/codeception-progress-reporter.svg?branch=master)](https://travis-ci.org/fr05t1k/codeception-progress-reporter)
+[![CI](https://github.com/fr05t1k/codeception-progress-reporter/actions/workflows/ci.yml/badge.svg)](https://github.com/fr05t1k/codeception-progress-reporter/actions/workflows/ci.yml)
 
 ![preview](preview.gif)
 

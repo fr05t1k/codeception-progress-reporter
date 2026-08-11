@@ -15,6 +15,7 @@
     "symfony/console": ">=2.7"
   },
   "require-dev": {
-    "codeception/module-asserts": "^1.1"
+    "codeception/module-asserts": "^1.1",
+    "behat/gherkin": "<4.9"
   }
 }
