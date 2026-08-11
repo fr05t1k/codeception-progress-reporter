@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Codeception\ProgressReporter;
 
-use Codeception\Event\FailEvent;
+use Codeception\Event\PrintResultEvent;
 use Codeception\Event\SuiteEvent;
 use Codeception\Event\TestEvent;
 use Codeception\Events;
@@ -39,11 +39,6 @@ class ProgressReporter extends Extension
     protected ?ProgressBar $progress = null;
 
     protected Status $status;
-
-    /**
-     * Number of failures printed so far (used to number the fail report).
-     */
-    private int $failNumber = 0;
 
     public function _initialize(): void
     {
@@ -81,7 +76,7 @@ class ProgressReporter extends Extension
             Events::SUITE_AFTER => 'afterSuite',
             Events::TEST_BEFORE => 'beforeTest',
             Events::TEST_AFTER => 'afterTest',
-            Events::TEST_FAIL_PRINT => 'printFailed',
+            Events::RESULT_PRINT_AFTER => 'printResult',
             Events::TEST_SUCCESS => 'success',
             Events::TEST_ERROR => 'error',
             Events::TEST_FAIL => 'fail',
@@ -102,7 +97,6 @@ class ProgressReporter extends Extension
     public function beforeSuite(SuiteEvent $event): void
     {
         $this->status = new Status();
-        $this->failNumber = 0;
 
         $suite = $event->getSuite();
         $count = max(1, count($suite->getTests()));
@@ -146,11 +140,16 @@ class ProgressReporter extends Extension
     }
 
     /**
-     * Print failed tests using the standard reporter.
+     * Print the full error/failure report once the run has finished.
+     *
+     * In Codeception 5 the built-in Console reporter is what renders the
+     * end-of-run defect list, but we silence it so only the progress bar is
+     * shown during the run. We therefore delegate the final report to a
+     * dedicated Console instance here.
      */
-    public function printFailed(FailEvent $event): void
+    public function printResult(PrintResultEvent $event): void
     {
-        $this->standardReporter?->printFail($event, ++$this->failNumber);
+        $this->standardReporter?->afterResult($event);
     }
 
     public function success(): void
