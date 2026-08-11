@@ -1,83 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codeception\ProgressReporter;
 
 /**
- * Class Status
+ * Mutable counter that tracks the outcome of tests within a suite run.
  */
-class Status
+final class Status
 {
-    /**
-     * Fails count
-     *
-     * @var int
-     */
-    private $fails = 0;
+    private int $fails = 0;
 
-    /**
-     * Success count
-     *
-     * @var int
-     */
-    private $success = 0;
+    private int $success = 0;
 
-    /**
-     * Errors count
-     *
-     * @var int
-     */
-    private $errors = 0;
+    private int $errors = 0;
 
-    /**
-     * Get fails count
-     *
-     * @return int
-     */
-    public function getFails()
+    public function getFails(): int
     {
         return $this->fails;
     }
 
-    /**
-     * Get success count
-     *
-     * @return int
-     */
-    public function getSuccess()
+    public function getSuccess(): int
     {
         return $this->success;
     }
 
-    /**
-     * Get errors count
-     *
-     * @return int
-     */
-    public function getErrors()
+    public function getErrors(): int
     {
         return $this->errors;
     }
 
-    /**
-     * Increment success
-     */
-    public function incSuccess()
+    public function incSuccess(): void
     {
         $this->success++;
     }
 
-    /**
-     * Increment errors
-     */
-    public function incErrors()
+    public function incErrors(): void
     {
         $this->errors++;
     }
 
-    /**
-     * Increment fails
-     */
-    public function incFails()
+    public function incFails(): void
     {
         $this->fails++;
     }

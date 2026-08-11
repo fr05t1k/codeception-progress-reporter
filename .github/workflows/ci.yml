@@ -14,13 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - '7.0'
-          - '7.1'
-          - '7.2'
-          - '7.3'
-          - '7.4'
-          - '8.0'
           - '8.1'
+          - '8.2'
+          - '8.3'
+          - '8.4'
 
     name: PHP ${{ matrix.php-version }}
 
@@ -33,6 +30,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           coverage: none
+          ini-values: register_argc_argv=On, memory_limit=512M
           tools: composer:v2
 
       - name: Get Composer cache directory
@@ -50,8 +48,29 @@ jobs:
       - name: Install dependencies
         run: composer update --prefer-dist --no-interaction
 
-      - name: Generate tests
+      - name: Generate stub tests
         run: sh ./maketests.sh
 
       - name: Run tests
         run: php vendor/bin/codecept run
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    name: Static analysis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction
+
+      - name: Run PHPStan
+        run: php vendor/bin/phpstan analyse --no-progress

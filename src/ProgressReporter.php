@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Codeception\ProgressReporter;
 
 use Codeception\Event\FailEvent;
@@ -10,51 +12,50 @@ use Codeception\Extension;
 use Codeception\Subscriber\Console;
 use Symfony\Component\Console\Helper\ProgressBar;
 
+use function count;
+use function max;
+use function pathinfo;
+
+use const PATHINFO_FILENAME;
+
 /**
- * Class ProgressReporter
+ * Codeception extension that replaces the default reporter output with a
+ * single terminal progress bar summarising the current suite run.
  */
 class ProgressReporter extends Extension
 {
     /**
-     * We are listening for events
+     * Events this extension subscribes to.
      *
-     * @var array
+     * @var array<string, string>
      */
-    public static $events = [];
+    public static array $events = [];
 
     /**
-     * Standard reporter for printing fails
-     *
-     * @var Console
+     * Standard reporter reused for printing failures at the end of the run.
      */
-    public $standardReporter;
+    public ?Console $standardReporter = null;
+
+    protected ?ProgressBar $progress = null;
+
+    protected Status $status;
 
     /**
-     * Progress bar
-     *
-     * @var ProgressBar
+     * Number of failures printed so far (used to number the fail report).
      */
-    protected $progress;
+    private int $failNumber = 0;
 
-    /**
-     * Status (counter)
-     *
-     * @var Status
-     */
-    protected $status;
-
-    /**
-     * Setup
-     */
-    public function _initialize()
+    public function _initialize(): void
     {
         if ($this->options['steps'] || $this->options['debug']) {
-            // Don't show progress bar when --steps or --debug option is provided
+            // Don't show the progress bar when --steps or --debug is provided.
             $this->unsubscribeFromEvents();
+
             return;
         }
 
         $this->subscribeToEvents();
+
         $format = '';
         if (!$this->options['silent']) {
             $format = "\nCurrent suite: <options=bold>%suite%</>\n" .
@@ -63,16 +64,17 @@ class ProgressReporter extends Extension
                 "<fg=cyan>[%bar%]</>\n%current%/%max% %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%\n";
         }
 
-        $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
+        // Turn off default printing for everything else.
+        $this->_reconfigure(['settings' => ['silent' => true]]);
         $this->standardReporter = new Console($this->options);
         ProgressBar::setFormatDefinition('custom', $format);
         $this->status = new Status();
     }
 
     /**
-     * Subscribe to all events
+     * Subscribe to all events.
      */
-    private function subscribeToEvents()
+    private function subscribeToEvents(): void
     {
         self::$events = [
             Events::SUITE_BEFORE => 'beforeSuite',
@@ -87,99 +89,92 @@ class ProgressReporter extends Extension
     }
 
     /**
-     * Unsubscribe from all events
+     * Unsubscribe from all events.
      */
-    private function unsubscribeFromEvents()
+    private function unsubscribeFromEvents(): void
     {
         self::$events = [];
     }
 
     /**
-     * Setup progress bar
-     *
-     * @param SuiteEvent $event
+     * Set up the progress bar for the suite.
      */
-    public function beforeSuite(SuiteEvent $event)
+    public function beforeSuite(SuiteEvent $event): void
     {
         $this->status = new Status();
+        $this->failNumber = 0;
 
-        $count = $event->getSuite()->count(true);
+        $suite = $event->getSuite();
+        $count = max(1, count($suite->getTests()));
+
         $this->progress = new ProgressBar($this->output, $count);
         $this->progress->setFormat('custom');
         $this->progress->setBarWidth($count);
-        $this->progress->setRedrawFrequency($count / 100);
+        $this->progress->setRedrawFrequency((int) max(1, $count / 100));
 
         $this->progress->setMessage('none', 'file');
-        $this->progress->setMessage($event->getSuite()->getBaseName(), 'suite');
-        $this->progress->setMessage($this->status->getSuccess(), 'success');
-        $this->progress->setMessage($this->status->getFails(), 'fails');
-        $this->progress->setMessage($this->status->getErrors(), 'errors');
+        $this->progress->setMessage($suite->getBaseName(), 'suite');
+        $this->updateCounters();
 
         $this->progress->start();
     }
 
     /**
-     * After suite
+     * Redraw the progress bar once the suite has finished.
      */
-    public function afterSuite()
+    public function afterSuite(): void
     {
-        $this->progress->display();
+        $this->progress?->display();
     }
 
     /**
-     * After test
+     * Advance the progress bar after each test.
      */
-    public function afterTest()
+    public function afterTest(): void
     {
-        $this->progress->advance();
-        $this->progress->setMessage($this->status->getSuccess(), 'success');
-        $this->progress->setMessage($this->status->getFails(), 'fails');
-        $this->progress->setMessage($this->status->getErrors(), 'errors');
+        $this->progress?->advance();
+        $this->updateCounters();
     }
 
     /**
-     * Before test
-     *
-     * @param TestEvent $event
+     * Display the name of the test that is about to run.
      */
-    public function beforeTest(TestEvent $event)
+    public function beforeTest(TestEvent $event): void
     {
-        $message = $event->getTest()->getMetadata()->getFilename();
-        $this->progress->setMessage(pathinfo($message, PATHINFO_FILENAME), 'file');
-    }
-
-
-    /**
-     * Print failed tests
-     *
-     * @param FailEvent $event
-     */
-    public function printFailed(FailEvent $event)
-    {
-        $this->standardReporter->printFail($event);
+        $filename = $event->getTest()->getMetadata()->getFilename();
+        $this->progress?->setMessage(pathinfo($filename, PATHINFO_FILENAME), 'file');
     }
 
     /**
-     * Success event
+     * Print failed tests using the standard reporter.
      */
-    public function success()
+    public function printFailed(FailEvent $event): void
+    {
+        $this->standardReporter?->printFail($event, ++$this->failNumber);
+    }
+
+    public function success(): void
     {
         $this->status->incSuccess();
     }
 
-    /**
-     * Error event
-     */
-    public function error()
+    public function error(): void
     {
         $this->status->incErrors();
     }
 
-    /**
-     * Fail event
-     */
-    public function fail()
+    public function fail(): void
     {
         $this->status->incFails();
+    }
+
+    /**
+     * Push the current status counters into the progress bar messages.
+     */
+    private function updateCounters(): void
+    {
+        $this->progress?->setMessage((string) $this->status->getSuccess(), 'success');
+        $this->progress?->setMessage((string) $this->status->getFails(), 'fails');
+        $this->progress?->setMessage((string) $this->status->getErrors(), 'errors');
     }
 }
